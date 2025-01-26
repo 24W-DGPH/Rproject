@@ -8,6 +8,7 @@ anyDuplicated(Sleep_health_and_lifestyle_dataset)
 df=unique(Sleep_health_and_lifestyle_dataset)
 
 
+
 library(dplyr)
 df <- df %>%
   mutate(BMI.Category = ifelse(BMI.Category == "Normal Weight", "Normal", BMI.Category))
@@ -43,10 +44,6 @@ library(tidyr)
 
 df <- df %>%
   separate(Blood.Pressure, into = c("Systolic", "Diastolic"), sep = "/")
-
-write.csv(df, file = "df.csv", row.names = FALSE)
-write.csv(df, file = "C:/Users/User/Documents/sleep/data/df.csv", row.names = FALSE)
-file.exists("df.csv")
 
 
 levels(df$Occupation)
@@ -132,9 +129,6 @@ df$BloodPressure.Category <- ifelse(
   df$Systolic >= 140 | df$Diastolic >= 90, "Hypertensive",
   ifelse(df$Systolic< 120 & df$Diastolic < 80, "Normal", "Pre-Hypertensive")
 )
-getwd
-
-
 
 
 # Count occurrences for BMI_Category
@@ -148,9 +142,6 @@ occupation_counts <- as.data.frame(table(df$Occupation))
 summary(df)
 library(ggplot2)
 
-library(ggplot2)
-
-library(ggplot2)
 ggplot(df, aes(x = Gender, fill = Quality.of.Sleep)) +
   geom_bar(position = "dodge") +
   labs(title = "Quality of sleep by Gender",
@@ -180,38 +171,8 @@ my_plotsleep <- ggplot(df, aes(x = Duration_of_Sleep, y = Quality_of_Sleep)) +
   geom_point() +
   labs(title = "Sleep Duration vs. Quality")
 
-# Save the specific plot
-ggsave("my_plotsleep.png", plot = my_plot, width = 8, height = 6)
-
-ggsave("C:/Users/User/Documents/sleep/data/my_plotsleep.png", width = 8, height = 6)
 
 
-file.exists("my_plotsleep.png")
-
-#importing plot
-
-install.packages("magick")
-library(magick)
-
-# Import the image
-my_plotsleep <- image_read("C:/Users/User/Documents/sleep/data/my_plotsleep.png")
-
-# Display the image
-print(my_plot)
-
-
-# Install necessary packages
-install.packages("png")   # For PNG files
-
-# Load the packages
-library(png)
-
-
-# Read and display a PNG image
-img <- readPNG("C:/Users/User/Documents/sleep/data/my_plotsleep.png")
-
-plot(1:2, type = "n", ann = FALSE)
-rasterImage(img, 1, 1, 2, 2)
 
 library(ggplot2)
 
@@ -248,17 +209,17 @@ ggplot(df, aes(x = Age, y = Sleep.Duration)) +
 
 ggsave("age_vs_sleep_duration_boxplot.png", width = 8, height = 6)
 
-library(ggplot2)
-
-
-
 bmi_counts <- as.data.frame(table(df$BMI.Category))
 colnames(bmi_counts) <- c("BMI", "Frequency")
 
 Occupation_counts <- as.data.frame(table(df$Occupation_Numeric))
 colnames(Occupation_counts) <- c("Occupation", "Frequency")
 
-
+# Count occurrences of each quality of sleep category
+Quality.of.sleep_count <- as.data.frame(table(df$Quality.of.Sleep))
+colnames(Quality.of.sleep_count) <- c("Quality", "Frequency")
+Age_count <- as.data.frame(table(df$Age))
+  
 
 library(ggplot2)
 
@@ -276,10 +237,7 @@ theme_minimal()
 
 
 
-
-
 library(dplyr)
-
 
 Stress.Level_counts <- as.data.frame(table(df$Stress.Level))
 
@@ -294,10 +252,6 @@ ggplot(df, aes(x = Stress.Level)) +
   theme_minimal()
 
 ggsave("stress_level_distribution_lineplot.png", width = 8, height = 6)
-
-
-
-
 
 
 colnames(bmi_counts) <- c("BMI", "Frequency")
@@ -321,7 +275,6 @@ ggplot(bmi_summary, aes(x = "", y = Freq, fill = Var1)) +
     fill = "bmi_counts"
   ) +
   theme_void()
-
 
 
 # Count occurrences of each BMI category
@@ -381,4 +334,52 @@ df <- df %>%
 head(data)
 
 
+library(shiny)
+library(ggplot2)
+
+# Define UI for the application
+ui <- fluidPage(
+  
+  # Application title
+  titlePanel("Quality of Sleep by Age Group and Occupation"),
+  
+  # Sidebar layout with slider input for age bins
+  sidebarLayout(
+    sidebarPanel(
+      sliderInput("bins",
+                  "Number of Age Groups (Bins):",
+                  min = 25,  # Minimum number of bins
+                  max = 60, # Maximum number of bins
+                  value = 8) # Default number of bins
+    ),
+    
+    # Main panel to show the plot
+    mainPanel(
+      plotOutput("sleepPlot") # Output the plot
+    )
+  )
+)
+
+
+
+
+# Define server logic
+server <- function(input, output) {
+  
+  output$sleepPlot <- renderPlot({
+    # Group ages into bins based on the slider input
+    df$Age <- cut(df$Age, 
+                  breaks = input$bins, 
+                  labels = paste( 1:input$bins))
+    
+    # Create the bar plot
+    ggplot(df, aes(x = Age, fill = Occupation)) +
+      geom_bar() +
+      labs(title = "Quality of Sleep Across Age Groups and Occupations",
+           x = "Age Groups",
+           y = "Quality.of.sleep_Count",
+           fill = "Occupation") +
+      theme_minimal()
+  })
+}
 
