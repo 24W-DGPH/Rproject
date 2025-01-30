@@ -1,87 +1,44 @@
-library(sleep_health_and_lifestyle_dataset)
+#installing packages
+install.packages("pacman")
+install.packages("renv")
+renv::init()
+renv::restore() 
+renv::snapshot()
+
+#load necessary libriaries
+library(pacman)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(shiny)
+
+
+#overview of dataset
 View(Sleep_health_and_lifestyle_dataset)
 head(Sleep_health_and_lifestyle_dataset)
 str(Sleep_health_and_lifestyle_dataset)
 summary(Sleep_health_and_lifestyle_dataset)
+
+#clean dataset
+
 colSums(is.na(Sleep_health_and_lifestyle_dataset))
 anyDuplicated(Sleep_health_and_lifestyle_dataset)
 df=unique(Sleep_health_and_lifestyle_dataset)
 
-
-
-library(dplyr)
 df <- df %>%
   mutate(BMI.Category = ifelse(BMI.Category == "Normal Weight", "Normal", BMI.Category))
-# Replace Column1, Column2 with the names of the columns to drop
+
+# Remove column 
 df <- df %>% select(-c(Person.ID))
 
-library(tidyr)
-
+#create a new columm for systolic and diastolic
 df <- df %>%
   separate(Blood.Pressure, into = c("Systolic", "Diastolic"), sep = "/")
-
-write.csv(df, file = "df.csv", row.names = FALSE)
-
-
-levels(df$Occupation)
-
-levels(df$Gender)
-levels(df$BMI.Category)
-levels(df$Sleep.Disorder)
-
-df$Occupation_numeric <- as.numeric(df$Occupation)
-df$Gender_Male<- as.numeric(df$Gender)
-df$Gender_Female<- as.numeric(df$Gender)
-
-
-library(dplyr)
-df <- df %>%
-  mutate(BMI.Category = ifelse(BMI.Category == "Normal Weight", "Normal", BMI.Category))
-# Replace Column1, Column2 with the names of the columns to drop
-df <- df %>% select(-c(Person.ID))
-
-library(tidyr)
-
-df <- df %>%
-  separate(Blood.Pressure, into = c("Systolic", "Diastolic"), sep = "/")
-
-
-levels(df$Occupation)
-
-levels(df$Gender)
-levels(df$BMI.Category)
-levels(df$Sleep.Disorder)
-
-df$Occupation_numeric <- as.numeric(df$Occupation)
-df$Gender_Male<- as.numeric(df$Gender)
-df$Gender_Female<- as.numeric(df$Gender)
-
-
-anyDuplicated(df)
-# Identify duplicates
-duplicates <- duplicated(df)
-
-# Display duplicate rows
-df[duplicates, ]
-
-
-# Logical vector of duplicates
-duplicates <- duplicated(df)
-
-# View duplicate rows
-df[duplicates, ]
-
-library(dplyr)
-
-df <- df %>% select(-c(Occupation_Numerical))
-
-library(dplyr)
 
 
 # Combine "Salesperson" and "Sales Representative" into "Sales"
 
-
-# Replace "Salesperson" and "Sales Representative" with "Sales"
 df$Occupation <- ifelse(df$Occupation %in% c("Salesperson", "Sales Representative"), 
                         "Sales Representative", 
                         df$Occupation)
@@ -90,39 +47,17 @@ df$Occupation <- ifelse(df$Occupation %in% c("Software Engineer", "Engineer"),
                         "Engineer", 
                         df$Occupation)
 
-
-
 # Define a custom mapping
 occupation_map <- c("Engineer" = 1, "Teacher" = 2, "Doctor" = 3, "Sales Representative" = 4, "Scientist" = 5, "Accountant" = 6, "Nurse" = 7, "Lawyer" = 8 )
 
 # Apply the mapping to create a numeric column
 df$Occupation_Numeric <- as.numeric(occupation_map[df$Occupation])
 
+
 Sleep.Disorder_map <- c("Sleep Apnea" = 1, "Insomnia" = 2, "None" = 3)
-df$Sleep.Disorder_Numeric <- as.numeric(Sleep.Disorder_map[df$Sleep.Disorder])
 
 BMI.Category_map <- c("Normal"= 1, "Overweight" = 2, "Obese" = 3)
 df$BMI.Category_Numeric <- as.numeric(BMI.Category_map[df$BMI.Category])
-
-# Remove rows where Occupation is "Manager"
-df <- df[df$Occupation != "Manager", ]
-
-anyDuplicated(df)
-View(anyDuplicated(df))
-
-# Count duplicates
-num_duplicates <- sum(duplicated(df))
-print(num_duplicates)
-
-# Check if duplicates remain
-any_duplicates <- anyDuplicated(df)  # 0 means no duplicates
-print(any_duplicates)
-
-# Remove duplicates
-df <- df[!duplicated(df), ]
-print(any_duplicates)
-
-library(dplyr)
 
 # Add a new column based on blood pressure thresholds
 df$BloodPressure.Category <- ifelse(
@@ -131,17 +66,69 @@ df$BloodPressure.Category <- ifelse(
 )
 
 
+df <- df %>%
+  
+  #create a new column for stress level categories
+  mutate(Stress.Level_Category = case_when(
+    Stress.Level >= 1 & Stress.Level <= 3 ~ "Low",      # Group 1-3 as Low
+    Stress.Level >= 4 & Stress.Level <= 6 ~ "Moderate", # Group 4-6 as Moderate
+    Stress.Level >= 7 & Stress.Level <= 10 ~ "High"     # Group 7-10 as High
+  ))
+
+
+# Convert Gender column to numeric
+df$Gender_Numeric <- ifelse(df$Gender == "Male", 1, 
+                              ifelse(df$Gender == "Female", 2, NA))
+
+
+
+# Remove rows where Occupation is "Manager"
+df <- df[df$Occupation != "Manager", ]
+
+
+# Identify and correcting duplicates
+anyDuplicated(df)
+View(anyDuplicated(df))
+
+# Count duplicates
+num_duplicates <- sum(duplicated(df))
+print(num_duplicates)
+
+# Remove duplicates
+df <- df[!duplicated(df), ]
+
+
 # Count occurrences for BMI_Category
 bmi_counts <- as.data.frame(table(df$BMI.Category))
+colnames(bmi_counts) <- c("BMI", "Frequency")
+bmi_summary <- as.data.frame(bmi_counts)
+
+#count occurence for Age
+Age_counts <- as.data.frame(table(df$Age))
 
 # Count occurrences for Occupation
 occupation_counts <- as.data.frame(table(df$Occupation))
+colnames(Occupation_counts) <- c("Occupation", "Frequency")
 
+#count occurrences for stress level
+Stress.Level_category_counts <- as.data.frame(table(df$Stress.Level_Category))
+colnames(Stress.Level_category_counts) <- c("Category", "Freqency")
 
+# Count occurrences of each quality of sleep category
+Quality.of.sleep_count <- as.data.frame(table(df$Quality.of.Sleep))
+colnames(Quality.of.sleep_count) <- c("Quality", "Frequency")
+Stress.Level_counts <- as.data.frame(table(df$Stress.Level))
 
+# Count occurrences of each Blood pressure category
+
+# Count occurrences of each BMI category
+bp_counts <- table(df$BloodPressure.Category)
+bp_summary <- as.data.frame(bp_counts)
+
+#summarise the cleaned data "df"
 summary(df)
-library(ggplot2)
 
+#visualization
 ggplot(df, aes(x = Gender, fill = Quality.of.Sleep)) +
   geom_bar(position = "dodge") +
   labs(title = "Quality of sleep by Gender",
@@ -154,8 +141,7 @@ ggplot(df, aes(x = Gender, fill = Quality.of.Sleep)) +
 ggsave("my_plot.png", plot = my_plot, width = 8, height = 6)
 
 
-
-library(ggplot2)
+#trends between duration and quality of sleep
 ggplot(df, aes(x = Sleep.Duration, y = Quality.of.Sleep)) +
   geom_point(alpha = 0.6) +
   geom_smooth(method = "lm", se = TRUE, color = "purple") +
@@ -166,6 +152,7 @@ ggplot(df, aes(x = Sleep.Duration, y = Quality.of.Sleep)) +
   ) +
   theme_minimal()
 
+
 # Assign the plot to an object
 my_plotsleep <- ggplot(df, aes(x = Duration_of_Sleep, y = Quality_of_Sleep)) +
   geom_point() +
@@ -174,9 +161,7 @@ my_plotsleep <- ggplot(df, aes(x = Duration_of_Sleep, y = Quality_of_Sleep)) +
 
 
 
-library(ggplot2)
-
-
+#Relationship between physical activity and sleep quality
 df<-data.frame(Physical.Activity.Level, Quality.of.Sleep)
 
 ggplot(df, aes(x = Physical.Activity.Level, y = Quality.of.Sleep)) +
@@ -189,13 +174,13 @@ ggplot(df, aes(x = Physical.Activity.Level, y = Quality.of.Sleep)) +
   ) +
   theme_minimal()
 
-model <- lm(Sleep_Quality ~ Physical_Activity, data = data)
 summary(model)
 ggsave("physical_activity_vs_sleep_quality.png", width = 8, height = 6)
 
 
-df$Age <- cut(df$Age, breaks = c(0, 20, 30, 40, 50, 60, Inf),
-              labels = c( "0","20", "30", "40", "50","60"))
+#Relationship between age and sleep duration
+df$Age <- cut(df$Age, breaks = c(0,20,30,40,50,60),
+              labels = c( "20","30","40","50","60"))
 
 ggplot(df, aes(x = Age, y = Sleep.Duration)) +
   geom_boxplot(fill = "skyblue", color = "darkblue") +  # Box plot
@@ -209,21 +194,9 @@ ggplot(df, aes(x = Age, y = Sleep.Duration)) +
 
 ggsave("age_vs_sleep_duration_boxplot.png", width = 8, height = 6)
 
-bmi_counts <- as.data.frame(table(df$BMI.Category))
-colnames(bmi_counts) <- c("BMI", "Frequency")
 
-Occupation_counts <- as.data.frame(table(df$Occupation_Numeric))
-colnames(Occupation_counts) <- c("Occupation", "Frequency")
 
-# Count occurrences of each quality of sleep category
-Quality.of.sleep_count <- as.data.frame(table(df$Quality.of.Sleep))
-colnames(Quality.of.sleep_count) <- c("Quality", "Frequency")
-Age_count <- as.data.frame(table(df$Age))
-  
-
-library(ggplot2)
-
-# Example dataset
+#Distribution of occupation
 work <- data.frame(
   Category = c("Engineer", "Teacher", "Doctor", "Sales Representative", "Scientist", "Accountant", "Nurse", "Lawyer"),
   Value = c(25, 15, 24, 10, 2, 11, 29, 15)
@@ -237,11 +210,7 @@ theme_minimal()
 
 
 
-library(dplyr)
-
-Stress.Level_counts <- as.data.frame(table(df$Stress.Level))
-
-# Create a density plot
+# Create a density plot for stress level distribution
 ggplot(df, aes(x = Stress.Level)) +
   geom_density(color = "blue", fill = "skyblue", alpha = 0.5) +
   labs(
@@ -254,35 +223,19 @@ ggplot(df, aes(x = Stress.Level)) +
 ggsave("stress_level_distribution_lineplot.png", width = 8, height = 6)
 
 
-colnames(bmi_counts) <- c("BMI", "Frequency")
-
-
-
-# Count occurrences of each BMI category
-bmi_counts <- table(df$BMI.Category)
-
-
-# Convert to a data frame
-bmi_summary <- as.data.frame(bmi_counts)
-
-
-ggplot(bmi_summary, aes(x = "", y = Freq, fill = Var1)) +
+#BMI Category Disrtibution
+ggplot(bmi_summary, aes(x = "", y = Frequency, fill = Var1)) +
   geom_bar(stat = "identity", width = 1) +
   coord_polar(theta = "y") +
   labs(
     title = "BMI Category Distribution",
     x = NULL, y = NULL,
-    fill = "bmi_counts"
+    fill = "bmi_summary"
   ) +
   theme_void()
 
 
-# Count occurrences of each BMI category
-bp_counts <- table(df$BloodPressure.Category)
-
-# Convert to a data frame
-bp_summary <- as.data.frame(bp_counts)
-
+#Blood pressure distribution
 ggplot(bp_summary, aes(x = "", y = Freq, fill = Var1)) +
   geom_bar(stat = "identity", width = 1) +
   coord_polar(theta = "y") +
@@ -293,8 +246,7 @@ ggplot(bp_summary, aes(x = "", y = Freq, fill = Var1)) +
   ) +
   theme_void()
 
-library(ggplot2)
-
+#Relationship between daily step and heartrate
 ggplot(df, aes(x = Daily.Steps, y = Heart.Rate)) +
   geom_point(color = "green", size = 2, alpha = 0.6) +
   geom_smooth(method = "lm", color = "red", se = TRUE) +
@@ -304,10 +256,7 @@ ggplot(df, aes(x = Daily.Steps, y = Heart.Rate)) +
   theme_minimal()
 
 
-# Load ggplot2
-library(ggplot2)
-
-# Create a stacked histogram
+# Distribution of stress across age groups and occupation
 ggplot(df, aes(x = Age, fill = Occupation)) +
   geom_histogram(binwidth = 2, position = "stack", color = "black") +
   labs(
@@ -318,25 +267,16 @@ ggplot(df, aes(x = Age, fill = Occupation)) +
   ) +
   theme_minimal()
 
-
-# Load dplyr
-library(dplyr)
-
-# Create a new column for stress level categories
-df <- df %>%
-  mutate(Stress.Level_Category = case_when(
-    Stress.Level >= 1 & Stress.Level <= 3 ~ "Low",      # Group 1-3 as Low
-    Stress.Level >= 4 & Stress.Level <= 6 ~ "Moderate", # Group 4-6 as Moderate
-    Stress.Level >= 7 & Stress.Level <= 10 ~ "High"     # Group 7-10 as High
-  ))
-
-# View the updated dataset
-head(data)
+library(readr)
+df<-read.csv("df.csv")
+View(df)
 
 
-library(shiny)
-library(ggplot2)
+write.csv(df_cleaned, "cleaned_sleep_data.csv", row.names = FALSE)
+write.csv(df, "C:/Users/user/Documents/sleep/Rproject/cleaned_df.csv", row.names = FALSE)
 
+
+#shiny app
 # Define UI for the application
 ui <- fluidPage(
   
@@ -382,4 +322,6 @@ server <- function(input, output) {
       theme_minimal()
   })
 }
+getwd()
+
 
