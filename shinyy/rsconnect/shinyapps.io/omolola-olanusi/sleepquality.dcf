@@ -1,0 +1,12 @@
+name: sleepquality
+title: sleepquality
+username: omolola-olanusi
+account: omolola-olanusi
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 13855241
+bundleId: 9723140
+url: https://omolola-olanusi.shinyapps.io/sleepquality/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

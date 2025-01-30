@@ -7,6 +7,7 @@
 library(shiny)
 library(ggplot2)
 library(dplyr)
+library(readr)
 
 # Load dataset 
 df <- read.csv("df.csv")  
@@ -66,6 +67,7 @@ server <- function(input, output) {
 
 # Run the application
 shinyApp(ui = ui, server = server)
+
 
 
 
